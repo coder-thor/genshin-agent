@@ -1,6 +1,8 @@
 # genshin-agent
 
-原神助手：在终端里和 DeepSeek 对话，能记住上下文，能自己调用工具查角色资料。
+Agent 开发课程基础篇 Demo：原神小助手。
+
+课程视频：[Bilibili](https://www.bilibili.com/video/BV1MGnB63Eib/)
 
 ## 准备
 
