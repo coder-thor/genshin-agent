@@ -1,6 +1,6 @@
-import { callModel } from "./llm";
-import type { Memory } from "./memory";
-import { runTool, tools } from "./tools";
+import type { Memory } from "../memory/types";
+import { callModel } from "../models/deepseek";
+import { runTool, tools } from "../tools";
 
 // Agent：模型要用工具，程序就去执行，把结果发回去再问一次，直到它直接回答
 export async function reply(memory: Memory) {

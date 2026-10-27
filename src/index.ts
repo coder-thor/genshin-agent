@@ -1,7 +1,7 @@
 import readline from "node:readline/promises";
-import { logRound } from "./logger";
-import { createMemory } from "./memory"; // 不带历史：改成 "./no-memory"
-import { reply } from "./agent"; // 不带工具：改成 "./chat"
+import { reply } from "./agents/tool-agent"; // 不带工具：改成 "./agents/chat"
+import { createMemory } from "./memory/full-history"; // 不带历史：改成 "./memory/no-history"
+import { logRound } from "./utils/logger";
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 const memory = createMemory();

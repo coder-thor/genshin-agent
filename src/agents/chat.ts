@@ -1,5 +1,5 @@
-import { callModel } from "./llm";
-import type { Memory } from "./memory";
+import type { Memory } from "../memory/types";
+import { callModel } from "../models/deepseek";
 
 // 普通对话：把对话发给模型，拿到回答就结束
 export async function reply(memory: Memory) {

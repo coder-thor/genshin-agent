@@ -27,15 +27,28 @@ bun start
 
 ```
 src/
-├── index.ts       # 入口：读取输入、打印回答
-├── llm.ts         # 模型客户端：调用 DeepSeek，记录日志和 token 用量
-├── prompts.ts     # 系统提示词
-├── memory.ts      # 有记忆：整轮对话都发给模型
-├── no-memory.ts   # 没记忆：只发当前这一句
-├── chat.ts        # 普通对话：调一次模型就结束
-├── agent.ts       # Agent：模型要用工具就执行，直到它直接回答
-├── tools.ts       # 工具：查角色资料
-└── logger.ts      # 写 log.txt
+├── index.ts                # 入口：读取输入、打印回答
+├── agents/                 # 回答方式
+│   ├── chat.ts             #   普通对话：调一次模型就结束
+│   └── tool-agent.ts       #   Agent：模型要用工具就执行，直到它直接回答
+├── memory/                 # 对话记忆
+│   ├── types.ts            #   记忆的统一接口
+│   ├── full-history.ts     #   整轮对话都发给模型
+│   └── no-history.ts       #   只发当前这一句
+├── models/
+│   └── deepseek.ts         # 模型客户端：调用 DeepSeek，记录日志和 token 用量
+├── prompts/
+│   └── system.ts           # 系统提示词
+├── tools/
+│   ├── index.ts            # 工具注册：汇总所有工具，按名字执行
+│   └── get-character.ts    # 查角色资料
+└── utils/
+    └── logger.ts           # 写 log.txt
 ```
 
-`memory.ts` 和 `no-memory.ts`、`chat.ts` 和 `agent.ts` 用法完全一样，在 `src/index.ts` 里改 import 就能切换。
+同一个目录下的几种实现用法完全一样，在 `src/index.ts` 里改 import 就能切换：
+
+- `agents/chat` ↔ `agents/tool-agent`：要不要工具
+- `memory/no-history` ↔ `memory/full-history`：要不要记住之前的对话
+
+新加工具：在 `tools/` 里加一个文件，导出 `definition` 和 `run`，再登记到 `tools/index.ts`。

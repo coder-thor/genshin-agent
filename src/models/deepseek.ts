@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { log } from "./logger";
+import { log } from "../utils/logger";
 
 // DeepSeek 兼容 OpenAI 格式，但多了 thinking 参数，OpenAI SDK 的类型里没有，这里补上
 declare module "openai/resources/chat/completions/completions" {
@@ -9,7 +9,7 @@ declare module "openai/resources/chat/completions/completions" {
 }
 
 export type Message = OpenAI.Chat.ChatCompletionMessageParam;
-export type Tool = OpenAI.Chat.ChatCompletionTool;
+export type ToolDefinition = OpenAI.Chat.ChatCompletionFunctionTool;
 
 // Bun 会自动读取 .env，不需要 dotenv
 const client = new OpenAI({
@@ -18,7 +18,7 @@ const client = new OpenAI({
 });
 
 // 调一次模型：记日志、打印 token 用量，返回模型这次的回复
-export async function callModel(messages: Message[], tools?: Tool[]) {
+export async function callModel(messages: Message[], tools?: ToolDefinition[]) {
   const request = {
     model: "deepseek-flash",
     messages,
