@@ -1,7 +1,6 @@
 import OpenAI from "openai";
 import { log } from "../utils/logger";
 
-// DeepSeek 兼容 OpenAI 格式，但多了 thinking 参数，OpenAI SDK 的类型里没有，这里补上
 declare module "openai/resources/chat/completions/completions" {
   interface ChatCompletionCreateParamsBase {
     thinking?: { type: "enabled" | "disabled" };
@@ -11,22 +10,23 @@ declare module "openai/resources/chat/completions/completions" {
 export type Message = OpenAI.Chat.ChatCompletionMessageParam;
 export type ToolDefinition = OpenAI.Chat.ChatCompletionFunctionTool;
 
-// Bun 会自动读取 .env，不需要 dotenv
+// deepseek 为什么是 openai?  openai定义了一套 llm 的交互标准 然后 deepseek实现了这套标准
 const client = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
-  baseURL: "https://api.deepseek.com",
+  baseURL: "https://api.deepseek.com", // 是 deepseek 的地址
 });
 
-// 调一次模型：记日志、打印 token 用量，返回模型这次的回复
+
 export async function callModel(messages: Message[], tools?: ToolDefinition[]) {
   const request = {
-    model: "deepseek-flash",
-    messages,
+    model: "deepseek-flash", //调用的 llm 模型
+    messages, // 刚刚那个数组 [{role: system, content: 提示词}, { role: user, content: 钟离的圣遗物搭配 }]
     tools,
-    // 思考模式默认开启，这节课先关掉
     thinking: { type: "disabled" as const },
   };
   log("请求", request);
+  
+  // 就是在和 deepseek的 llm 交互
   const resp = await client.chat.completions.create(request);
   log("返回", resp);
 

@@ -1,13 +1,11 @@
 import type { Message } from "../models/deepseek";
-import { SYSTEM_PROMPT } from "../prompts/system";
-import type { Memory } from "./types";
 
-export function createMemory(): Memory {
-  const messages: Message[] = [{ role: "system", content: SYSTEM_PROMPT }];
-  return {
-    add: (msg) => {
-      messages.push(msg);
-    },
-    get: () => messages,
-  };
-}
+const history: Message[] = [];
+
+export const memory = {
+  load: () => history,
+  // save api专门保存 message 信息
+  save: (msg: Message) => {
+    history.push(msg);
+  },
+};

@@ -15,9 +15,10 @@ export const definition: ToolDefinition = {
 };
 
 // 从社区整理的原神数据里，按名字查角色的星级、元素、武器
-export async function run(args: { name: string }) {
-  const resp = await fetch("https://gi.yatta.moe/api/v2/chs/avatar");
+export async function run(args: { name: string }) { // name: 薇斯纳
+  const resp = await fetch("https://gi.yatta.moe/api/v2/chs/avatar"); // 返回所有的角色
   const data = await resp.json();
+  // 从所有角色里找看看有没有参数 name 的角色
   const found: any = Object.values(data.data.items).find((c: any) => c.name === args.name);
   if (!found) return { error: `没有找到角色：${args.name}` };
   return { name: found.name, rarity: found.rank, element: found.element, weapon: found.weaponType };

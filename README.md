@@ -21,7 +21,7 @@
 bun start
 ```
 
-在终端里输入问题，输入 `exit` 退出。每次发给模型的完整请求和返回，都会追加到根目录的 `log.txt`。
+在终端里输入问题，输入 `exit` 退出。每一轮的用户输入、发给模型的完整请求、模型的完整返回、工具调用和最终回答，都会追加到项目根目录的 `log.txt`。
 
 ## 目录结构
 
@@ -32,9 +32,7 @@ src/
 │   ├── chat.ts             #   普通对话：调一次模型就结束
 │   └── tool-agent.ts       #   Agent：模型要用工具就执行，直到它直接回答
 ├── memory/                 # 对话记忆
-│   ├── types.ts            #   记忆的统一接口
-│   ├── full-history.ts     #   整轮对话都发给模型
-│   └── no-history.ts       #   只发当前这一句
+│   └── full-history.ts     #   用一个数组存下所有对话
 ├── models/
 │   └── deepseek.ts         # 模型客户端：调用 DeepSeek，记录日志和 token 用量
 ├── prompts/
@@ -46,9 +44,6 @@ src/
     └── logger.ts           # 写 log.txt
 ```
 
-同一个目录下的几种实现用法完全一样，在 `src/index.ts` 里改 import 就能切换：
-
-- `agents/chat` ↔ `agents/tool-agent`：要不要工具
-- `memory/no-history` ↔ `memory/full-history`：要不要记住之前的对话
+`agents/chat` 和 `agents/tool-agent` 用法一样，在 `src/index.ts` 里改 import 就能切换要不要工具。
 
 新加工具：在 `tools/` 里加一个文件，导出 `definition` 和 `run`，再登记到 `tools/index.ts`。
