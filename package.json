@@ -1,0 +1,13 @@
+{
+  "name": "genshin-agent",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.1",
+    "openai": "^7.45.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "typescript": "^7.0.2"
+  }
+}
