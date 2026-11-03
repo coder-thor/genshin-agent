@@ -21,8 +21,9 @@ while (true) {
   // 记住 memory 本身就是 agent 工程师最基本的知识
   memory.save({ role: "user", content: input })
   const answer = await reply(input, memory.load());
+  // 用了 runtools 模式以后 anwser 的返回结果有变化， 他的 anwser 的内容呢会放到 content 里
   memory.save({role: "assistant", content: answer})
   logAnswer(answer);
-  console.log("助手：", answer);
+
 }
 rl.close();

@@ -21,5 +21,6 @@ export async function run(args: { name: string }) { // name: 薇斯纳
   // 从所有角色里找看看有没有参数 name 的角色
   const found: any = Object.values(data.data.items).find((c: any) => c.name === args.name);
   if (!found) return { error: `没有找到角色：${args.name}` };
+  console.log("tool 被调用了", args)
   return { name: found.name, rarity: found.rank, element: found.element, weapon: found.weaponType };
 }
