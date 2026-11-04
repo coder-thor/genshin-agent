@@ -3,7 +3,7 @@ import { SYSTEM_PROMPT } from "../prompts/system";
 import {  runTool, tools } from "../tools";
 import { log } from "../utils/logger";
 
-export async function reply(question: string, histories: Message[]) {
+export async function reply(histories: Message[], onDelta?: (text: string) => void) {
   const messages: Message[] = [
     { role: "system", content: SYSTEM_PROMPT },
     ...histories,
@@ -11,7 +11,7 @@ export async function reply(question: string, histories: Message[]) {
 
   while (true) {
     // 这个时候的 message 是不是就带了社区结果
-    const answer = await callModel(messages, tools);
+    const answer = await callModel(messages, tools, onDelta);
     messages.push(answer);
 
     if (!answer.tool_calls?.length) return answer.content ?? "";
@@ -20,11 +20,9 @@ export async function reply(question: string, histories: Message[]) {
       if (call.type !== "function") continue;
       const args = JSON.parse(call.function.arguments);
       const result = await runTool(call.function.name, args); // 拿到社区的查询结果以后
-      console.log(`[调用工具] ${call.function.name} ${call.function.arguments} => ${JSON.stringify(result)}`);
       log("调用工具", { name: call.function.name, args, result });
       messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
     }
     // for循环结束
   }
-
 }

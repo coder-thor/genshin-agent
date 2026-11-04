@@ -5,9 +5,11 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "bun src/index.ts",
+    "client": "bun src/client.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "hono": "^4.13.16",
     "openai": "^7.45.0"
   },
   "devDependencies": {

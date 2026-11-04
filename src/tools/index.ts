@@ -12,22 +12,3 @@ export async function  runTool(name: string, args: any) {
   return tool.run(args);
 }
 
-
-export const runnableTools = allTools.map((t) => {
-  const { name, description, parameters } = t.definition.function;
-  if (description === undefined || parameters === undefined) {
-    throw new Error(`${name} 缺少 description 或 parameters`);
-  }
-
-  return {
-    type: "function" as const,
-    function: {
-      name,
-      description,
-      parameters,
-      parse: (raw: string) => JSON.parse(raw), // parse 用于告诉openaisdk 怎么去解析 llm 传过来的参数 "{"name": "薇斯纳"}""
-      function: (args: any) => t.run(args), // 告诉 openai sdk 怎么调用对应的 tool
-    },
-  };
-});
-

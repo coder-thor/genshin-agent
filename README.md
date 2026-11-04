@@ -17,26 +17,52 @@ Agent 开发课程基础篇 Demo：原神小助手。
 
 ## 运行
 
-在项目根目录执行：
+服务端：
 
 ```bash
 bun start
 ```
 
-在终端里输入问题，输入 `exit` 退出。每一轮的用户输入、发给模型的完整请求、模型的完整返回、工具调用和最终回答，都会追加到项目根目录的 `log.txt`。
+客户端另开一个终端：
+
+```bash
+bun run client
+```
+
+发给模型的请求、返回和工具调用会追加到项目根目录的 `log.txt`。
+
+## 手稿
+
+第 1 节到目前最新一节的 Excalidraw 手稿在仓库根目录的 `drawings/`。
+
+第 1 到第 5 节，以及生产缺口那一份，来自 Obsidian 库 `orbitproxy/Excalidraw`。最后一份服务端和客户端手稿在课程目录 `drafts/genshin-gap/server-client.excalidraw`。
+
+| 文件 | 来源 | 内容 |
+|---|---|---|
+| `drawings/lesson-1.excalidraw` | `agent-dev-lesson-1.excalidraw` | 第 1 节 |
+| `drawings/lesson-2.excalidraw` | `agent-dev-lesson-2.excalidraw` | 第 2 节 |
+| `drawings/lesson-3.excalidraw` | `agent-dev-lesson-3.excalidraw` | 第 3 节。这一节只画了开场的「01 课程目标」 |
+| `drawings/lesson-4.excalidraw` | `agent-dev-lesson-4 5.excalidraw` | 第 4 节 |
+| `drawings/lesson-5.excalidraw` | `agent-dev-lesson-5 3.excalidraw` | 第 5 节 |
+| `drawings/genshin-agent-gap.excalidraw` | `genshin-agent-gap 12.excalidraw` | 离生产闭环还差什么 |
+| `drawings/server-client.excalidraw` | `drafts/genshin-gap/server-client.excalidraw` | 目前最新一节：服务端和客户端。两种架构、SSE、一次对话怎么走、每个文件做什么 |
+
+用 VS Code 的 Excalidraw 插件打开，步骤和截图见 [drawings/README.md](drawings/README.md)。
 
 ## 目录结构
 
 ```
 src/
-├── index.ts                # 入口：读取输入、打印回答
+├── index.ts                # 启动 HTTP 服务
+├── client.ts               # 测试客户端：登录、发消息
+├── http/                   # 路由、JSON、SSE
+├── auth/                   # 登录和 token
+├── sessions/               # 用户、会话、消息，以及一轮对话
 ├── agents/                 # 回答方式
 │   ├── chat.ts             #   普通对话：调一次模型就结束
 │   └── tool-agent.ts       #   Agent：模型要用工具就执行，直到它直接回答
-├── memory/                 # 对话记忆
-│   └── full-history.ts     #   用一个数组存下所有对话
 ├── models/
-│   └── deepseek.ts         # 模型客户端：调用 DeepSeek，记录日志和 token 用量
+│   └── deepseek.ts         # 模型客户端：调用 DeepSeek
 ├── prompts/
 │   └── system.ts           # 系统提示词
 ├── tools/
@@ -45,7 +71,5 @@ src/
 └── utils/
     └── logger.ts           # 写 log.txt
 ```
-
-`agents/chat` 和 `agents/tool-agent` 用法一样，在 `src/index.ts` 里改 import 就能切换要不要工具。
 
 新加工具：在 `tools/` 里加一个文件，导出 `definition` 和 `run`，再登记到 `tools/index.ts`。
