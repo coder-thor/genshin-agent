@@ -30,4 +30,6 @@ Cursor 的扩展市场是同一份，搜索并安装同一个插件。
 | `lesson-4.excalidraw` | 第 4 节 |
 | `lesson-5.excalidraw` | 第 5 节 |
 | `lesson-6.excalidraw` | 离生产闭环还差什么 |
-| `lesson-7.excalidraw` | 目前最新一节：服务端和客户端。两种架构、SSE、一次对话怎么走、每个文件做什么 |
+| `lesson-7.excalidraw` | 服务端和客户端。两种架构、SSE、一次对话怎么走、每个文件做什么 |
+| `persistence.excalidraw` | 持久化。内存和硬盘、SQLite、Drizzle |
+| `sampling.excalidraw` | 采样和思考。温度、草稿、档位 |
