@@ -63,7 +63,25 @@ async function messageTurn(c: Context<Env>, chatId?: string) {
   });
 }
 
+// 发消息走 SSE。查工具的那几秒没有 token，连接是静的。
+function isMessagePost(req: Request) {
+  if (req.method !== "POST") return false;
+  const pathname = new URL(req.url).pathname;
+  if (pathname === "/messages") return true;
+  const parts = pathname.split("/");
+  return parts.length === 4 && parts[1] === "chats" && parts[3] === "messages";
+}
+
 export function listen(port = 3000) {
-  Bun.serve({ port, hostname: "127.0.0.1", fetch: app.fetch });
+  Bun.serve({
+    port,
+    hostname: "127.0.0.1",
+    fetch(req, server) {
+      // Bun 默认 10 秒没有字节就掐掉连接。客户端这条连接是登录留下来的，
+      // fetch 会把同一个 POST 再发一次，服务端就新建第二个聊天，整轮再跑一遍。
+      if (isMessagePost(req)) server.timeout(req, 0);
+      return app.fetch(req);
+    },
+  });
   console.log(`http://127.0.0.1:${port}`);
 }

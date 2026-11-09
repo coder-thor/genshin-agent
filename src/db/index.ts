@@ -16,3 +16,6 @@ export const db = drizzle(sqlite, { schema });
 // drizzle-kit 的类型按 libsql 写，bun:sqlite 这份实例同样能对照模型建表。
 const pushed = await pushSQLiteSchema(schema, db as unknown as Parameters<typeof pushSQLiteSchema>[1]);
 if (pushed.statementsToExecute.length > 0) await pushed.apply();
+
+const { seed } = await import("./seed");
+seed();

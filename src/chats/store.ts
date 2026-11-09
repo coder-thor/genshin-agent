@@ -55,7 +55,6 @@ export function append(userId: string, chatId: string, message: Message) {
   const chat = getChat(userId, chatId);
   if (chat === "forbidden" || chat === null) return chat;
   // 往数据库的 chatMessage表插入一条记录， 这个就等于是历史记录哈
-  console.log("on message要往数据库插入内容了哦", message)
   db.insert(chatMessages).values({ chatId, body: JSON.stringify(message) }).run();
   return chat;
 }

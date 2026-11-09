@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 // 人。邮箱密码登录时，密码不在这张表上。
 // 这个对象对应的 SQL：
@@ -86,4 +86,43 @@ export const chatMessages = sqliteTable("chat_messages", {
   body: text("body").notNull(),
 });
 
-export const schema = { user, session, account, verification, chats, chatMessages };
+// 角色目录。没有这行时，get_character 再去 yatta 查，查到就写回。
+export const characters = sqliteTable("characters", {
+  name: text("name").primaryKey(),
+  rank: integer("rank").notNull(),
+  element: text("element").notNull(),
+  weaponType: text("weapon_type").notNull(),
+});
+
+// 武器目录。推荐表只存名字，星级和类型在这里。
+export const weapons = sqliteTable("weapons", {
+  name: text("name").primaryKey(),
+  rank: integer("rank").notNull(),
+  type: text("type").notNull(),
+});
+
+// 圣遗物套装。推荐表只存套装名，效果原文在这里。
+export const artifacts = sqliteTable("artifacts", {
+  name: text("name").primaryKey(),
+  // JSON 数组，每条是一句套装效果。
+  effects: text("effects").notNull(),
+});
+
+// 某角色推荐的武器名。不含星级。
+export const weaponRecommendations = sqliteTable("weapon_recommendations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  characterName: text("character_name").notNull(),
+  weaponName: text("weapon_name").notNull(),
+}, (table) => [unique().on(table.characterName, table.weaponName)]);
+
+// 某角色推荐的圣遗物套装名。不含效果。
+export const artifactRecommendations = sqliteTable("artifact_recommendations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  characterName: text("character_name").notNull(),
+  setName: text("set_name").notNull(),
+}, (table) => [unique().on(table.characterName, table.setName)]);
+
+export const schema = {
+  user, session, account, verification, chats, chatMessages,
+  characters, weapons, artifacts, weaponRecommendations, artifactRecommendations,
+};

@@ -1,11 +1,13 @@
 import { callModel, type Message } from "../models/deepseek";
 import { SYSTEM_PROMPT } from "../prompts/system";
-import {  runTool, tools } from "../tools";
-import { log } from "../utils/logger";
+import { runTool, tools } from "../tools";
+import { logLine } from "../utils/logger";
+
+const maxSteps = 5;
 
 export async function reply(
   histories: Message[],
-  onDelta?: (text: string) => void,
+  onDelta?: (text: string) => void | Promise<void>,
   onMessage?: (message: Message) => void,
 ) {
   const messages: Message[] = [
@@ -13,24 +15,51 @@ export async function reply(
     ...histories,
   ];
 
+  let steps = 0;
   while (true) {
-    // 这个时候的 message 是不是就带了社区结果
-    const answer = await callModel(messages, tools, onDelta); // onDelta是在一轮回答中的某个 token 出来的时候就会调用
-    // 一轮回答结束， 把全量的所有内容都传给 onMessage
-    messages.push(answer);
-    onMessage?.(answer);  // 把这个 answer 也就是 llm 的回答 存进数据库
+    steps += 1;
+    if (steps > maxSteps) return "查了几次还没写完，换个问法再试一次";
 
-    if (!answer.tool_calls?.length) return answer.content ?? "";
+    const { message, finishReason } = await callModel(messages, tools, onDelta);
+    messages.push(message);
+    onMessage?.(message);
 
-    for (const call of answer.tool_calls) { // 循环查 llm 有没有给我下指令
+    // 输出被截断时，工具参数可能是半截，不执行。
+    if (finishReason === "length") return message.content ?? "";
+    if (!message.tool_calls?.length) return message.content ?? "";
+
+    let yattaDone = false;
+    for (const call of message.tool_calls) {
       if (call.type !== "function") continue;
-      const args = JSON.parse(call.function.arguments);
-      const result = await runTool(call.function.name, args); // 拿到社区的查询结果以后
-      log("调用工具", { name: call.function.name, args, result });
-      const toolMessage: Message = { role: "tool", tool_call_id: call.id, content: JSON.stringify(result) };
+      // get_yatta 是这一轮的最后一步，后面的工具不再执行。
+      if (yattaDone) break;
+      logLine(`role: assistant 调用 tools --- ${call.function.name} ${call.function.arguments}`);
+      let result: unknown;
+      try {
+        const args = JSON.parse(call.function.arguments) as { name: string };
+        result = await runTool(call.function.name, args);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "这次工具调用失败";
+        logLine(`role: assistant 调用 tools --- ${call.function.name} 失败 ${reason}`);
+        result = { error: "这次工具调用失败" };
+      }
+      const toolMessage: Message = {
+        role: "tool",
+        tool_call_id: call.id,
+        content: JSON.stringify(result),
+      };
       messages.push(toolMessage);
-      onMessage?.(toolMessage); //  llm是不是可能不给回答 但是给出 tool 调用的指令， 所以这些指令也要进历史记录
+      onMessage?.(toolMessage);
+      if (call.function.name === "get_yatta") yattaDone = true;
     }
-    // for循环结束
+
+    if (!yattaDone) continue;
+
+    steps += 1;
+    if (steps > maxSteps) return "查了几次还没写完，换个问法再试一次";
+    const final = await callModel(messages, undefined, onDelta);
+    messages.push(final.message);
+    onMessage?.(final.message);
+    return final.message.content ?? "";
   }
 }

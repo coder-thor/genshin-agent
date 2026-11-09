@@ -52,6 +52,20 @@ async function chats(token: string) {
   return data.chats;
 }
 
+function startThinking() {
+  const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+  let i = 0;
+  process.stdout.write(`${frames[0]} thinking`);
+  const timer = setInterval(() => {
+    i += 1;
+    process.stdout.write(`\r${frames[i % frames.length]} thinking`);
+  }, 80);
+  return () => {
+    clearInterval(timer);
+    process.stdout.write("\r\x1b[2K");
+  };
+}
+
 async function say(token: string, text: string, chatId?: string) {
   const path = chatId ? `/chats/${chatId}/messages` : "/messages";
   const resp = await fetch(`${base}${path}`, {
@@ -69,11 +83,16 @@ async function say(token: string, text: string, chatId?: string) {
   let buf = "";
   let current = chatId;
   let started = false;
+  let stopThinking = startThinking();
+  const beginAnswer = () => {
+    if (started) return;
+    stopThinking();
+    stopThinking = () => {};
+    process.stdout.write("助手：");
+    started = true;
+  };
   const writeToken = (chunk: string) => {
-    if (!started) {
-      process.stdout.write("助手：");
-      started = true;
-    }
+    beginAnswer();
     process.stdout.write(chunk);
   };
 
@@ -86,18 +105,26 @@ async function say(token: string, text: string, chatId?: string) {
       const parsed = parseSse(buf.slice(0, split));
       buf = buf.slice(split + 2);
       if (parsed?.event === "chat" && parsed.data.chatId) {
-        if (!current) console.log(`[聊天 ${parsed.data.chatId}]`);
+        if (!current) {
+          stopThinking();
+          console.log(`[聊天 ${parsed.data.chatId}]`);
+          stopThinking = startThinking();
+        }
         current = parsed.data.chatId;
       } else if (parsed?.event === "token" && parsed.data.text) {
         writeToken(parsed.data.text);
       } else if (parsed?.event === "done") {
+        if (!started && parsed.data.text) writeToken(parsed.data.text);
+        stopThinking();
         process.stdout.write("\n");
       } else if (parsed?.event === "error") {
+        stopThinking();
         process.stdout.write(`\n[错误] ${parsed.data.message ?? ""}\n`);
       }
       split = buf.indexOf("\n\n");
     }
   }
+  stopThinking();
   return current;
 }
 

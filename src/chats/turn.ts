@@ -1,4 +1,5 @@
 import { reply } from "../agents/tool-agent";
+import { logLine } from "../utils/logger";
 import { append, finishChatTurn, getChat, load, nextSeq } from "./store";
 
 export async function runTurn(
@@ -9,6 +10,7 @@ export async function runTurn(
 ) {
   const chat = getChat(userId, chatId);
   if (chat === "forbidden" || chat === null) return;
+  logLine(`role: user --- ${text}`);
   append(userId, chatId, { role: "user", content: text });
   const histories = load(userId, chatId);
   if (histories === "forbidden" || histories === null) {
@@ -17,11 +19,12 @@ export async function runTurn(
   }
   try {
     // question 已经 append 进这个 chat，reply 只负责接着跑
-    const answer = await reply(histories, (delta) => {
-      void send("token", { seq: nextSeq(chat), text: delta });
+    const answer = await reply(histories, async (delta) => {
+      await send("token", { seq: nextSeq(chat), text: delta });
     }, (message) => { // onMessage
       append(userId, chatId, message);
     });
+    logLine(`本轮响应回复 --- ${answer}`);
     await send("done", { seq: nextSeq(chat), text: answer });
     console.log(`用户 ${userId} 聊天 ${chatId} 本轮结束`);
   } catch (error) {

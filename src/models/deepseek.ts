@@ -1,5 +1,4 @@
 import OpenAI from "openai";
-import { log } from "../utils/logger";
 
 declare module "openai/resources/chat/completions/completions" {
   interface ChatCompletionCreateParamsBase {
@@ -22,7 +21,7 @@ const client = new OpenAI({
 export async function callModel(
   messages: Message[],
   tools?: ToolDefinition[],
-  onDelta?: (text: string) => void,
+  onDelta?: (text: string) => void | Promise<void>,
 ) {
   const request = {
     model: "deepseek-flash", //调用的 llm 模型
@@ -32,8 +31,6 @@ export async function callModel(
     stream: true as const,
     stream_options: { include_usage: true } // 在流式模式下统计对应的 token
   };
-  log("请求", request);
-
   // 就是在和 deepseek的 llm 交互
   const stream = await client.chat.completions.create(request); // 一条流 我们需要不断的去监听这个流送过来的内容块
 
@@ -41,14 +38,19 @@ export async function callModel(
   // 一块一块的 content 交给调用方，拼进历史的必须是完整的一句话
   let currentFullContent = "" // 代表本次请求的 message 内容
   const currentFullToolsCall: { id: string; name: string; args: string }[] = []
+  let finishReason: string | null = null
 
   for await (const streamContent of stream) {
-    const delta = streamContent.choices[0]?.delta
+    const choice = streamContent.choices[0]
+    if (!choice) continue
+    if (choice.finish_reason) finishReason = choice.finish_reason
+    const delta = choice.delta
     if (!delta) continue
 
     if (delta.content) { // content必须有值， 没值的话就可能是 tool/call
       currentFullContent += delta.content
-      onDelta?.(delta.content) // llm基于流式输出的情况下每返回一个 token 就把这个 token 调用 ondelta, 外部会把这个 token直接调用 send 通过 sse 返回给客户端
+      // 等这条 token 写进 SSE 再读下一块，避免工具轮次多的时候正文被 done 冲掉
+      await onDelta?.(delta.content)
     }
 
     // 我们还要考虑一个事情 就是 tools/call llm会指定调用某个 tool
@@ -83,6 +85,5 @@ export async function callModel(
       function: { name: cft.name, arguments: cft.args }
     })) : undefined,
   }
-  log("返回", message)
-  return message
+  return { message, finishReason }
 }
