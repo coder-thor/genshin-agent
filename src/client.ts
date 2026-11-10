@@ -111,6 +111,10 @@ async function say(token: string, text: string, chatId?: string) {
           stopThinking = startThinking();
         }
         current = parsed.data.chatId;
+      } else if (parsed?.event === "summarize") {
+        stopThinking();
+        process.stdout.write(`${parsed.data.text ?? "context summarized"}\n`);
+        if (!started) stopThinking = startThinking();
       } else if (parsed?.event === "token" && parsed.data.text) {
         writeToken(parsed.data.text);
       } else if (parsed?.event === "done") {

@@ -23,6 +23,8 @@ export async function runTurn(
       await send("token", { seq: nextSeq(chat), text: delta });
     }, (message) => { // onMessage
       append(userId, chatId, message);
+    }, async () => {
+      await send("summarize", { text: "context summarized" }); // 告诉客户端 消息被总结
     });
     logLine(`本轮响应回复 --- ${answer}`);
     await send("done", { seq: nextSeq(chat), text: answer });
